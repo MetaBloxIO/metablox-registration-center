@@ -9,7 +9,6 @@
 # User-specific stuff
 .idea/
 lib/
-build/
 .env
 typechain/
 artifacts/
