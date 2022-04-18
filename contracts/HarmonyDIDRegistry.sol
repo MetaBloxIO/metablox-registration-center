@@ -24,29 +24,50 @@ contract HarmonyDIDRegistry {
     bytes    value
   );
   
-  function checkSignature(address owner, address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal returns(address) {
+  function nonceOf(address key) public view returns (uint _nonce) {
+    return nonce[vcName];
+  }
+
+  function checkSignature(address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal returns(address) {
     address signer = ecrecover(hash, sigV, sigR, sigS);
-    if (owner == address(0x00)) {
-      require(signer == owner, "bad_signature");
-    } else {
-      require(signer == pubkey, "bad_signature");
-    }
+    require(signer == pubkey, "bad_signature");
     nonce[signer]++;
     return signer;
   }
 
-  function registerOrUpdateDidKey(string memory did, address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
-    address owner = dids[did];
-    bytes32 hash = sha256(abi.encodePacked(did, pubkey, nonce[owner], "registerOrUpdate"));
-    checkSignature(owner, pubkey, sigV, sigR, sigS, hash);
+  function didAddress(string memory did) public view returns (address _address) {
+    return dids[did];
+  }
+
+  function registerDid(string memory did, address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
+    require(dids[did] == address(0x00), "did_exist");
+
+    bytes32 hash = sha256(abi.encodePacked(did, pubkey, nonce[pubkey], "registerOrUpdate"));
+    checkSignature(pubkey, sigV, sigR, sigS, hash);
     dids[did] = pubkey;
+  }
+
+  function updateDid(string memory did, address pubkey, uint8 nSigV, bytes32 nSigR, bytes32 nSigS, uint8 oSigV, bytes32 oSigR, bytes32 oSigS) public {
+    address owner = dids[did];
+    require(owner != address(0x00), "did_not_exist");
+    bytes32 hash1 = sha256(abi.encodePacked(nonce[pubkey], did, "updateDid"));
+    checkSignature(owner, nSigV, nSigR, nSigS, hash1);
+    
+    bytes32 hash2 = sha256(abi.encodePacked(hash1, nonce[owner], "updateDid"));
+    checkSignature(owner, nSigV, nSigR, nSigS, hash1);
+    
+    dids[did] = pubkey;
+  } 
+
+  function vcIssuer(string memory vcName) public view returns (address _address) {
+    return vcIssuers[vcName];
   }
 
   function createVcDef(string memory name, string memory did, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
     require(bytes(vcIssuers[name]).length == 0, "cred_exist");
     address owner = dids[did];
     bytes32 hash = sha256(abi.encodePacked(name, did, nonce[owner], "createVc"));
-    checkSignature(owner, address(0x00), sigV, sigR, sigS, hash);
+    checkSignature(owner, sigV, sigR, sigS, hash);
     vcIssuers[name] = did;
   }
 
@@ -55,7 +76,7 @@ contract HarmonyDIDRegistry {
     require(owner != address(0x00), "did_not_exist");
     bytes32 hash = sha256(abi.encodePacked(nonce[owner], did, "setAttribute", name, value));
 
-    checkSignature(owner, address(0x00), sigV, sigR, sigS, hash);
+    checkSignature(owner, sigV, sigR, sigS, hash);
 
     emit DIDAttributeChanged(did, name, value);
   }
@@ -64,9 +85,8 @@ contract HarmonyDIDRegistry {
     require(bytes(vcIssuers[vcName]).length != 0, "cred_not_exists");
     address owner = dids[vcIssuers[vcName]];
     bytes32 hash = sha256(abi.encodePacked(vcName, nonce[owner], "setVcAttribute", name, value));
-    checkSignature(owner, address(0x00), sigV, sigR, sigS, hash);
+    checkSignature(owner,  sigV, sigR, sigS, hash);
 
     emit VCSchemaChanged(vcName, name, value);
   }
-
 }
