@@ -23,20 +23,12 @@ contract HarmonyDIDRegistry {
     bytes32  name,
     bytes    value
   );
-  
-  function nonceOf(address key) public view returns (uint _nonce) {
-    return nonce[vcName];
-  }
 
   function checkSignature(address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal returns(address) {
     address signer = ecrecover(hash, sigV, sigR, sigS);
     require(signer == pubkey, "bad_signature");
     nonce[signer]++;
     return signer;
-  }
-
-  function didAddress(string memory did) public view returns (address _address) {
-    return dids[did];
   }
 
   function registerDid(string memory did, address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
@@ -58,10 +50,6 @@ contract HarmonyDIDRegistry {
     
     dids[did] = pubkey;
   } 
-
-  function vcIssuer(string memory vcName) public view returns (address _address) {
-    return vcIssuers[vcName];
-  }
 
   function createVcDef(string memory name, string memory did, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
     require(bytes(vcIssuers[name]).length == 0, "cred_exist");
