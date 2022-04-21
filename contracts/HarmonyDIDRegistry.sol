@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
-pragma solidity >=0.4.22 <0.8.0;
+pragma solidity >=0.4.22 <=0.8.13;
 
 contract HarmonyDIDRegistry {
 
@@ -46,7 +46,7 @@ contract HarmonyDIDRegistry {
     checkSignature(owner, nSigV, nSigR, nSigS, hash1);
     
     bytes32 hash2 = sha256(abi.encodePacked(hash1, nonce[owner], "updateDid"));
-    checkSignature(owner, nSigV, nSigR, nSigS, hash1);
+    checkSignature(owner, oSigV, oSigR, oSigS, hash2);
     
     dids[did] = pubkey;
   } 
