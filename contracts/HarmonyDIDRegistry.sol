@@ -24,19 +24,24 @@ contract HarmonyDIDRegistry {
     bytes    value
   );
 
-  function checkSignature(address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal returns(address) {
+  function checkSignature(address _account, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal {
     address signer = ecrecover(hash, sigV, sigR, sigS);
-    require(signer == pubkey, "bad_signature");
+    require(signer == _account, "bad_signature");
     nonce[signer]++;
-    return signer;
   }
 
-  function registerDid(string memory did, address pubkey, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
+  function registerDid(string memory did, address _account, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
     require(dids[did] == address(0x00), "did_exist");
 
-    bytes32 hash = sha256(abi.encodePacked(did, pubkey, nonce[pubkey], "registerOrUpdate"));
-    checkSignature(pubkey, sigV, sigR, sigS, hash);
-    dids[did] = pubkey;
+    bytes32 hash = sha256(abi.encodePacked(did, _account, nonce[_account], "register"));
+    bytes32 ethSignedMessageHash = keccak256(
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    hash
+                )
+    );
+    checkSignature(_account, sigV, sigR, sigS, ethSignedMessageHash);
+    dids[did] = _account;
   }
 
   function updateDid(string memory did, address pubkey, uint8 nSigV, bytes32 nSigR, bytes32 nSigS, uint8 oSigV, bytes32 oSigR, bytes32 oSigS) public {
