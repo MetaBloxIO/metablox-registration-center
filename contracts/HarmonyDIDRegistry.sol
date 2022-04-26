@@ -33,7 +33,7 @@ contract HarmonyDIDRegistry {
   function registerDid(string memory did, address _account, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
     require(dids[did] == address(0x00), "did_exist");
 
-    bytes32 hash = sha256(abi.encodePacked(did, _account, nonce[_account], "register"));
+    bytes32 hash = keccak256(abi.encodePacked(did, _account, nonce[_account], "register"));
     bytes32 ethSignedMessageHash = keccak256(
                 abi.encodePacked(
                     "\x19Ethereum Signed Message:\n32",
