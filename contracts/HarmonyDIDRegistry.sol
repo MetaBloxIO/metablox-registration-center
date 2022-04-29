@@ -24,36 +24,36 @@ contract HarmonyDIDRegistry {
     bytes    value
   );
 
-  function checkSignature(address _account, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal {
+  function checkSignature(address account, uint8 sigV, bytes32 sigR, bytes32 sigS, bytes32 hash) internal {
     address signer = ecrecover(hash, sigV, sigR, sigS);
-    require(signer == _account, "bad_signature");
+    require(signer == account, "bad_signature");
     nonce[signer]++;
   }
 
-  function registerDid(string memory did, address _account, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
+  function registerDid(string memory did, address account, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
     require(dids[did] == address(0x00), "did_exist");
 
-    bytes32 hash = keccak256(abi.encodePacked(did, _account, nonce[_account], "register"));
+    bytes32 hash = keccak256(abi.encodePacked(did, account, nonce[account], "register"));
     bytes32 ethSignedMessageHash = keccak256(
                 abi.encodePacked(
                     "\x19Ethereum Signed Message:\n32",
                     hash
                 )
     );
-    checkSignature(_account, sigV, sigR, sigS, ethSignedMessageHash);
-    dids[did] = _account;
+    checkSignature(account, sigV, sigR, sigS, ethSignedMessageHash);
+    dids[did] = account;
   }
 
-  function updateDid(string memory did, address pubkey, uint8 nSigV, bytes32 nSigR, bytes32 nSigS, uint8 oSigV, bytes32 oSigR, bytes32 oSigS) public {
+  function updateDid(string memory did, address account, uint8 nSigV, bytes32 nSigR, bytes32 nSigS, uint8 oSigV, bytes32 oSigR, bytes32 oSigS) public {
     address owner = dids[did];
     require(owner != address(0x00), "did_not_exist");
-    bytes32 hash1 = sha256(abi.encodePacked(nonce[pubkey], did, "updateDid"));
+    bytes32 hash1 = sha256(abi.encodePacked(nonce[account], did, "updateDid"));
     checkSignature(owner, nSigV, nSigR, nSigS, hash1);
     
     bytes32 hash2 = sha256(abi.encodePacked(hash1, nonce[owner], "updateDid"));
     checkSignature(owner, oSigV, oSigR, oSigS, hash2);
     
-    dids[did] = pubkey;
+    dids[did] = account;
   } 
 
   function createVcDef(string memory name, string memory did, uint8 sigV, bytes32 sigR, bytes32 sigS) public {
