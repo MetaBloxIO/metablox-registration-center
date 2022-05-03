@@ -4,13 +4,10 @@ pragma solidity >=0.4.22 <=0.8.13;
 
 contract HarmonyDIDRegistry {
 
-  mapping(string => address) public dids;
-  /*
-     key     credential  name
-     value   issuer's did   
-  */
-  mapping(string => string)  public vcIssuers; 
+  mapping(string => address) public dids; //key: did string.  value: address
+  mapping(string => string)  public vcIssuers; //key:credential name. value: issuer's did 
   mapping(address => uint)   public nonce;
+  mapping(address => uint) public changed; //key: address.  value: block number
 
   event DIDAttributeChanged(
     string indexed did,
@@ -81,5 +78,6 @@ contract HarmonyDIDRegistry {
     checkSignature(owner,  sigV, sigR, sigS, hash);
 
     emit VCSchemaChanged(vcName, name, value);
+    changed[dids[vcIssuers[vcName]]] = block.number;
   }
 }
